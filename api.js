@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const jwtkey = "temporary_key";
 const { userModel } = require("./models/user");
+const { postModel } = require("./models/post");
 
 module.exports = async (app) => {
   // Handle user registration
@@ -41,7 +42,7 @@ module.exports = async (app) => {
     // Verify information
     if (typeof password != "string" || typeof username != "string")
       return res.json({ status: "bad" });
-    if (!password || !username) return res.json({status: "bad"});
+    if (!password || !username) return res.json({ status: "bad" });
 
     // Find user in db
     const user = await userModel.findOne({ username }).lean();
@@ -56,10 +57,55 @@ module.exports = async (app) => {
       return res.json({ status: "bad" });
     }
 
+    // Create token
     const token = jwt.sign({ id: user._id }, jwtkey);
     console.log("created token");
 
     // Send token
     res.json({ status: "ok", token: token });
   });
+
+  app.post("/api/addPost", async (req, res) => {
+    const { token, title, content } = req.body;
+
+    console.log(req.body);
+
+    // Verify information
+    if (title.length > 200) {
+      return res.status(400).send();
+    }
+    if (content.length > 1000) {
+      return res.status(400).send();
+    }
+    if (!content || !title) {
+      return res.status(400).send();
+    }
+
+    console.log("trying to add post")
+
+    try {
+      // Get user
+      const user = await getUserFromToken(token);
+
+      // Create a new post
+      await postModel.create({
+        author: user._id,
+        title,
+        content,
+      });
+
+      console.log("Added post")
+
+      // Send ok status to client
+      res.status(200).send();
+    } catch (e) {
+      res.status(417).send();
+      console.log(e);
+    }
+  });
+
+  async function getUserFromToken(token) {
+    const user = await userModel.findById(jwt.verify(token, jwtkey).id);
+    return user;
+  }
 };
