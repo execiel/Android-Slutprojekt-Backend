@@ -1,0 +1,17 @@
+{
+  "name": "android-backend",
+  "version": "1.0.0",
+  "description": "Backend for the android project",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.0.4"
+  }
+}
