@@ -65,6 +65,23 @@ module.exports = async (app) => {
     res.json({ status: "ok", token: token });
   });
 
+  // Gets users own posts from token
+  app.post("/api/getHome", async (req, res) => {
+    const { token } = req.body;
+
+    try {
+      const user = await getUserFromToken(token);
+
+      const userPosts = await postModel.find({author: user._id}).exec();
+
+      return res.json({posts: userPosts});
+
+    } catch (e) {
+      console.log(e)
+      return res.status(400).send()
+    }
+  });
+
   app.post("/api/addPost", async (req, res) => {
     const { token, title, content } = req.body;
 
