@@ -96,6 +96,49 @@ module.exports = async (app) => {
       return res.status(400).send()
     }
   });
+  
+  app.put("/api/editPost", async (req, res) => {
+    // Grab inforamtion from client
+    const {token, id, title, content} = req.body;
+
+    if(title == "" || content == "")
+      return res.status(400).send;
+    
+    if(title.length > 200 || content.length > 1000 )
+      return res.status(400).send;
+    
+    try {
+      // Grab post from id
+      post = await postModel.findById(id);
+
+      // Grab user from token
+      user = await getUserFromToken(token)
+
+      console.log("found user and post");
+
+      // Verify if user owns post
+      if(user._id.toString() != post.author.toString()) {
+        console.log("unauthorized deletion attempt")
+        // Unauthorized request
+        return res.status(401).send()
+      }
+
+      // Update post
+      post.title = title;
+      post.content = content;
+      await post.save();
+      console.log("Saved post")
+
+      // Return updated post list after deletion
+      const userPosts = await postModel.find({ author: user._id }).exec();
+
+      return res.json({ posts: userPosts });
+    } catch (e) {
+      console.log(e)
+      return res.status(400).send()
+    }
+
+  })
 
   // Gets users own posts from token
   app.post("/api/getHome", async (req, res) => {
