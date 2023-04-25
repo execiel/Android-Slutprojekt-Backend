@@ -65,6 +65,32 @@ module.exports = async (app) => {
     res.json({ status: "ok", token: token });
   });
 
+  app.delete("/api/deleteUser", async (req, res) => {
+    const { token, password } = req.body;
+    console.log(req.body)
+
+    try {
+      // Grab user from token
+      user = await getUserFromToken(token)
+      
+      // see if passwords match
+      if (!(await bcrypt.compare(password, user.password)))
+        return res.status(400).send();
+
+      console.log("attempting to delete user")
+
+      // Delete user
+      await userModel.deleteOne({_id: user.id})
+
+      console.log("user deleted")
+
+      res.status(200).send();
+    } catch (e) {
+      console.log(e)
+      return res.status(400).send()
+    }
+  });
+
   app.delete("/api/deletePost", async (req, res) => {
     const { token, id } = req.body;
 
