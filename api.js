@@ -65,6 +65,38 @@ module.exports = async (app) => {
     res.json({ status: "ok", token: token });
   });
 
+  app.delete("/api/deletePost", async (req, res) => {
+    const { token, id } = req.body;
+
+    try {
+      // Grab post from id
+      post = await postModel.findById(id);
+
+      // Grab user from token
+      user = await getUserFromToken(token)
+
+      // Verify if user owns post
+      if(user._id.toString() != post.author.toString()) {
+        console.log("unauthorized deletion attempt")
+        // Unauthorized request
+        return res.status(401).send()
+      }
+
+      // Delete post
+      await postModel.deleteOne({_id: id})
+
+      console.log("Deleted post")
+
+      // Return updated post list after deletion
+      const userPosts = await postModel.find({ author: user._id }).exec();
+
+      return res.json({ posts: userPosts });
+    } catch (e) {
+      console.log(e)
+      return res.status(400).send()
+    }
+  });
+
   // Gets users own posts from token
   app.post("/api/getHome", async (req, res) => {
     const { token } = req.body;
@@ -72,13 +104,12 @@ module.exports = async (app) => {
     try {
       const user = await getUserFromToken(token);
 
-      const userPosts = await postModel.find({author: user._id}).exec();
+      const userPosts = await postModel.find({ author: user._id }).exec();
 
-      return res.json({posts: userPosts});
-
+      return res.json({ posts: userPosts });
     } catch (e) {
-      console.log(e)
-      return res.status(400).send()
+      console.log(e);
+      return res.status(400).send();
     }
   });
 
@@ -98,7 +129,7 @@ module.exports = async (app) => {
       return res.status(400).send();
     }
 
-    console.log("trying to add post")
+    console.log("trying to add post");
 
     try {
       // Get user
@@ -111,7 +142,7 @@ module.exports = async (app) => {
         content,
       });
 
-      console.log("Added post")
+      console.log("Added post");
 
       // Send ok status to client
       res.status(200).send();
